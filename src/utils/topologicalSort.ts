@@ -1,8 +1,14 @@
 import { INodeList, INetwork } from '../types/index';
 import { networkToNodeList } from './index';
 
+interface IDict {
+  [id: string] : {
+    childs: string[]
+    parents: string[]
+  }
+}
 
-const getInitDict = (nodeIds: string[]) =>
+const getInitDict = (nodeIds: string[]): IDict =>
   nodeIds.reduce((acc, nodeId) => ({
     ...acc,
     [nodeId]: {
@@ -11,7 +17,7 @@ const getInitDict = (nodeIds: string[]) =>
     }
   }), {})
 
-const fillDict = (dict, nodes: INodeList) => {
+const fillDict = (dict: IDict, nodes: INodeList) => {
   for (const node of nodes) {
     dict[node.id].parents = node.parents;
 
@@ -22,7 +28,7 @@ const fillDict = (dict, nodes: INodeList) => {
   }
 }
 
-const removeEdgeMaker = (dict) => (id1: string, id2: string) => {
+const removeEdgeMaker = (dict: IDict) => (id1: string, id2: string) => {
   dict[id2].childs = dict[id2].childs.filter(x => x != id1);
   dict[id2].parents = dict[id2].parents.filter(x => x != id1);
 
@@ -38,31 +44,34 @@ const isCyclic = (dict) => {
   })
 }
 
+const initS = (dict: IDict, nodeIds: string[]) => {
+  return nodeIds.reduce((acc, nodeId) => {
+    if (dict[nodeId].parents.length == 0) {
+      acc.push(nodeId);
+    }
+    return acc;
+  }, [] as string[]);
+}
+
 export const topologicalSort = (nodes: INodeList) => {
   const nodeIds = nodes.map(n => n.id);
   const dict = getInitDict(nodeIds);
   const removeEdge = removeEdgeMaker(dict);
   
   fillDict(dict, nodes)
+  
+  const s = initS(dict, nodeIds);
+  const l = [];
 
-  const S: string[] = [];
-  for (const id of nodeIds) {
-    
-    if (dict[id].parents.length == 0) {
-      S.push(id);
-    }
-  }
+  while (s.length > 0) {
+    const n = s.shift();
+    l.push(n);
 
-  const L = [];
-  while (S.length > 0) {
-    const n = S.shift();
-    L.push(n);
-
-    for (let m of dict[n].childs) {
+    for (const m of dict[n].childs) {
       removeEdge(n, m);
 
       if (dict[m].parents.length == 0) {
-        S.push(m);
+        s.push(m);
       }
     }
   }
@@ -71,7 +80,7 @@ export const topologicalSort = (nodes: INodeList) => {
 
   return {
     cyclic,
-    sort: L
+    sort: l
   };
 }
 
