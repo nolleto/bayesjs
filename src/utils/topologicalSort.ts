@@ -59,7 +59,7 @@ export const topologicalSort = (nodes: INodeList) => {
   const removeEdge = removeEdgeMaker(dict);
   
   fillDict(dict, nodes)
-  
+
   const s = initS(dict, nodeIds);
   const l = [];
 

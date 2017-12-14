@@ -3,6 +3,7 @@ import {
   junctionTree,
   variableElimination,
 } from './inferences/index';
+export { hasCycle } from './utils/index';
 
 export const inferences =  {
   enumeration,
