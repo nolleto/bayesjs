@@ -9,9 +9,10 @@ import {
   buildMoralGraph,
   buildTriangulatedGraph,
 } from '../../graphs'
+import { isNil, map, pick, pipe, toString } from 'ramda'
 
 import { buildCliqueGraph } from '../../graphs/cliqueGraph'
-import { isNil } from 'ramda'
+import { getNodesFromNetwork } from '../../utils'
 
 interface ICreateCliquesResult {
   cliques: IClique[];
@@ -19,10 +20,17 @@ interface ICreateCliquesResult {
   junctionTree: IGraph;
 }
 
-const createCliquesWeakMap = new WeakMap<INetwork, ICreateCliquesResult>()
+const createCliquesWeakMap = new Map<string, ICreateCliquesResult>()
+
+const getNetworkKey: (network: INetwork) => string = pipe(
+  getNodesFromNetwork,
+  map(pick(['id', 'cpt'])),
+  toString,
+)
 
 export default (network: INetwork): ICreateCliquesResult => {
-  const cached = createCliquesWeakMap.get(network)
+  const key = getNetworkKey(network)
+  const cached = createCliquesWeakMap.get(key)
 
   if (isNil(cached)) {
     const moralGraph = buildMoralGraph(network)
@@ -31,7 +39,7 @@ export default (network: INetwork): ICreateCliquesResult => {
     const junctionTree = buildJunctionTree(cliqueGraph, cliques, sepSets)
     const result = { cliques, sepSets, junctionTree }
 
-    createCliquesWeakMap.set(network, result)
+    createCliquesWeakMap.set(key, result)
 
     return result
   }
